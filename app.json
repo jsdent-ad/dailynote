@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "_expo_temp",
-    "slug": "_expo_temp",
+    "name": "DailyNote",
+    "slug": "dailynote",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "expotemp",
+    "scheme": "dailynote",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {

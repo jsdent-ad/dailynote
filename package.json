@@ -1,12 +1,14 @@
 {
-  "name": "expo_temp",
+  "name": "dailynote",
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "build": "expo export --platform web",
+    "vercel-build": "expo export --platform web"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
