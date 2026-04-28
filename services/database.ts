@@ -9,9 +9,9 @@ let db: SQLite.SQLiteDatabase | null = null;
  * Returns the singleton database instance.
  * Call initializeDatabase() before first use.
  */
-export function getDatabase(): SQLite.SQLiteDatabase {
+export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
   if (!db) {
-    db = SQLite.openDatabaseSync(DB_NAME);
+    db = await SQLite.openDatabaseAsync(DB_NAME);
   }
   return db;
 }
@@ -20,31 +20,32 @@ export function getDatabase(): SQLite.SQLiteDatabase {
  * Initializes the database: enables WAL mode, creates tables/indexes,
  * and runs any pending migrations.
  */
-export function initializeDatabase(): void {
-  const database = getDatabase();
+export async function initializeDatabase(): Promise<void> {
+  const database = await getDatabase();
 
   // Enable WAL mode for better concurrent read performance
-  database.execSync('PRAGMA journal_mode = WAL;');
+  await database.execAsync('PRAGMA journal_mode = WAL;');
 
-  const currentVersion = database.getFirstSync<{ user_version: number }>(
+  const result = await database.getFirstAsync<{ user_version: number }>(
     'PRAGMA user_version;'
-  )!.user_version;
+  );
+  const currentVersion = result!.user_version;
 
   if (currentVersion < 1) {
-    migrateToV1(database);
+    await migrateToV1(database);
   }
 
   // Future migrations:
-  // if (currentVersion < 2) { migrateToV2(database); }
+  // if (currentVersion < 2) { await migrateToV2(database); }
 
-  database.execSync(`PRAGMA user_version = ${CURRENT_VERSION};`);
+  await database.execAsync(`PRAGMA user_version = ${CURRENT_VERSION};`);
 }
 
 /**
  * Migration v0 -> v1: Create initial tables and indexes.
  */
-function migrateToV1(database: SQLite.SQLiteDatabase): void {
-  database.execSync(`
+async function migrateToV1(database: SQLite.SQLiteDatabase): Promise<void> {
+  await database.execAsync(`
     CREATE TABLE IF NOT EXISTS daily_notes (
       id            INTEGER PRIMARY KEY AUTOINCREMENT,
       date          TEXT    NOT NULL UNIQUE,

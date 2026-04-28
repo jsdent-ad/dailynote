@@ -2,18 +2,19 @@ import { getRange, getStreak } from '@/services/dailyNotes';
 import { getCompletionStats } from '@/services/todos';
 import type { Period } from '@/types';
 
-export function getEmotionData(startDate: string, endDate: string) {
-  return getRange(startDate, endDate).map((n) => ({
+export async function getEmotionData(startDate: string, endDate: string) {
+  const notes = await getRange(startDate, endDate);
+  return notes.map((n) => ({
     date: n.date,
     score: n.emotion_score,
   }));
 }
 
-export function getCompletionData(startDate: string, endDate: string) {
+export async function getCompletionData(startDate: string, endDate: string) {
   return getCompletionStats(startDate, endDate);
 }
 
-export function getCurrentStreak(today: string) {
+export async function getCurrentStreak(today: string) {
   return getStreak(today);
 }
 

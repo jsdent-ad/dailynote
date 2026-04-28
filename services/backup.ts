@@ -14,8 +14,8 @@ interface BackupData {
 }
 
 export async function createBackup(): Promise<void> {
-  const notes = exportNotes();
-  const todos = exportTodos();
+  const notes = await exportNotes();
+  const todos = await exportTodos();
   const data: BackupData = {
     version: 1,
     exported_at: new Date().toISOString(),
@@ -49,13 +49,13 @@ export async function restoreBackup(): Promise<boolean> {
     throw new Error('잘못된 백업 파일 형식입니다.');
   }
 
-  const db = getDatabase();
+  const db = await getDatabase();
 
-  db.runSync('DELETE FROM todos');
-  db.runSync('DELETE FROM daily_notes');
+  await db.runAsync('DELETE FROM todos');
+  await db.runAsync('DELETE FROM daily_notes');
 
   for (const note of data.daily_notes) {
-    db.runSync(
+    await db.runAsync(
       `INSERT INTO daily_notes (id, date, emotion_score, diary_text, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?)`,
       [
@@ -70,7 +70,7 @@ export async function restoreBackup(): Promise<boolean> {
   }
 
   for (const todo of data.todos) {
-    db.runSync(
+    await db.runAsync(
       `INSERT INTO todos (id, date, content, is_completed, display_order, carried_over, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [

@@ -33,12 +33,11 @@ export default function RootLayout() {
   // Initialize database once on app start
   useEffect(() => {
     if (!dbInitialized.current) {
-      try {
-        initializeDatabase();
-        dbInitialized.current = true;
-      } catch (e) {
+      dbInitialized.current = true;
+      initializeDatabase().catch((e) => {
         console.error('Failed to initialize database:', e);
-      }
+        dbInitialized.current = false;
+      });
     }
   }, []);
 

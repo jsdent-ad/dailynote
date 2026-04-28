@@ -29,12 +29,12 @@ interface DailyState {
   setSelectedDate: (date: string) => void;
   goToPreviousDay: () => void;
   goToNextDay: () => void;
-  loadDayData: () => void;
-  updateEmotionScore: (score: number | null) => void;
-  updateDiaryText: (text: string) => void;
-  addTodo: (content: string) => void;
-  toggleTodo: (id: number) => void;
-  removeTodo: (id: number) => void;
+  loadDayData: () => Promise<void>;
+  updateEmotionScore: (score: number | null) => Promise<void>;
+  updateDiaryText: (text: string) => Promise<void>;
+  addTodo: (content: string) => Promise<void>;
+  toggleTodo: (id: number) => Promise<void>;
+  removeTodo: (id: number) => Promise<void>;
   setIsRecording: (recording: boolean) => void;
 }
 
@@ -58,7 +58,7 @@ export const useDailyStore = create<DailyState>((set, get) => ({
     set({ selectedDate: next });
   },
 
-  loadDayData: () => {
+  loadDayData: async () => {
     const { selectedDate } = get();
     const today = getTodayString();
 
@@ -66,49 +66,49 @@ export const useDailyStore = create<DailyState>((set, get) => ({
     if (selectedDate === today) {
       const yesterday = getYesterdayString(selectedDate);
       try {
-        todosService.carryOver(yesterday, selectedDate);
+        await todosService.carryOver(yesterday, selectedDate);
       } catch {
         // Silently ignore carry-over errors
       }
     }
 
-    const dailyNote = dailyNotesService.getByDate(selectedDate);
-    const todos = todosService.listByDate(selectedDate);
+    const dailyNote = await dailyNotesService.getByDate(selectedDate);
+    const todos = await todosService.listByDate(selectedDate);
     set({ dailyNote, todos });
   },
 
-  updateEmotionScore: (score: number | null) => {
+  updateEmotionScore: async (score: number | null) => {
     const { selectedDate } = get();
-    dailyNotesService.upsertByDate(selectedDate, { emotion_score: score });
-    const dailyNote = dailyNotesService.getByDate(selectedDate);
+    await dailyNotesService.upsertByDate(selectedDate, { emotion_score: score });
+    const dailyNote = await dailyNotesService.getByDate(selectedDate);
     set({ dailyNote });
   },
 
-  updateDiaryText: (text: string) => {
+  updateDiaryText: async (text: string) => {
     const { selectedDate } = get();
-    dailyNotesService.upsertByDate(selectedDate, { diary_text: text });
-    const dailyNote = dailyNotesService.getByDate(selectedDate);
+    await dailyNotesService.upsertByDate(selectedDate, { diary_text: text });
+    const dailyNote = await dailyNotesService.getByDate(selectedDate);
     set({ dailyNote });
   },
 
-  addTodo: (content: string) => {
+  addTodo: async (content: string) => {
     const { selectedDate } = get();
-    todosService.create(selectedDate, content);
-    const todos = todosService.listByDate(selectedDate);
+    await todosService.create(selectedDate, content);
+    const todos = await todosService.listByDate(selectedDate);
     set({ todos });
   },
 
-  toggleTodo: (id: number) => {
+  toggleTodo: async (id: number) => {
     const { selectedDate } = get();
-    todosService.toggleComplete(id);
-    const todos = todosService.listByDate(selectedDate);
+    await todosService.toggleComplete(id);
+    const todos = await todosService.listByDate(selectedDate);
     set({ todos });
   },
 
-  removeTodo: (id: number) => {
+  removeTodo: async (id: number) => {
     const { selectedDate } = get();
-    todosService.deleteTodo(id);
-    const todos = todosService.listByDate(selectedDate);
+    await todosService.deleteTodo(id);
+    const todos = await todosService.listByDate(selectedDate);
     set({ todos });
   },
 

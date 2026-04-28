@@ -13,7 +13,7 @@ interface StatsState {
   completionData: CompletionStat[];
   streak: number;
   setPeriod: (period: Period) => void;
-  loadStats: () => void;
+  loadStats: () => Promise<void>;
 }
 
 export const useStatsStore = create<StatsState>((set, get) => ({
@@ -27,14 +27,14 @@ export const useStatsStore = create<StatsState>((set, get) => ({
     get().loadStats();
   },
 
-  loadStats: () => {
+  loadStats: async () => {
     const { period } = get();
     const { startDate, endDate } = getDateRange(period);
     const today = new Date().toISOString().slice(0, 10);
 
-    const emotionData = getEmotionData(startDate, endDate);
-    const completionData = getCompletionData(startDate, endDate);
-    const streak = getCurrentStreak(today);
+    const emotionData = await getEmotionData(startDate, endDate);
+    const completionData = await getCompletionData(startDate, endDate);
+    const streak = await getCurrentStreak(today);
 
     set({ emotionData, completionData, streak });
   },
