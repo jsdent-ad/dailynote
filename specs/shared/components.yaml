@@ -1,0 +1,39 @@
+version: "2.0"
+
+shared_components:
+  BottomTabBar:
+    type: navigation
+    description: 하단 탭 바 (3개 탭)
+    used_in: [screen-01, screen-02, screen-03]
+    tabs:
+      - { icon: note-calendar, label: 데일리노트, route: /daily }
+      - { icon: chart-line, label: 통계, route: /stats }
+      - { icon: gear, label: 설정, route: /settings }
+
+  ConfirmDialog:
+    type: modal
+    description: 확인/취소 다이얼로그
+    used_in: [screen-01, screen-03]
+    props:
+      title: string
+      message: string
+      onConfirm: callback
+      onCancel: callback
+
+  EmptyState:
+    type: feedback
+    description: 데이터 없을 때 안내 메시지
+    used_in: [screen-02]
+    props:
+      icon: string
+      message: string
+
+  ListItem:
+    type: interactive
+    description: 설정 목록 항목 (아이콘 + 레이블 + 액션)
+    used_in: [screen-03]
+    props:
+      label: string
+      icon: string (optional)
+      onPress: callback
+      trailing: component (optional)

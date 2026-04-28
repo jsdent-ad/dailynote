@@ -1,0 +1,85 @@
+version: "2.0"
+
+screen:
+  id: screen-02
+  name: 통계/인사이트
+  route: /stats
+  layout: single-scroll
+  description: >
+    감정 흐름, 할일 완료율, 연속 기록일을 시각적으로 표시.
+    주간/월간 토글로 기간 전환.
+
+data_requirements:
+  - resource: daily_notes
+    needs: [date, emotion_score]
+    filters: { date_range: ":period" }
+    operations: [get_range, get_streak]
+
+  - resource: todos
+    needs: [date, is_completed]
+    filters: { date_range: ":period" }
+    operations: [get_completion_stats]
+
+state:
+  local:
+    - period: "주간(weekly) 또는 월간(monthly), 기본값: weekly"
+
+components:
+  - id: period_toggle
+    type: segment-control
+    position: top
+    function: 주간/월간 기간 전환
+    options: [주간, 월간]
+    interactions:
+      - "토글 변경 → 차트 데이터 재로드"
+
+  - id: emotion_chart
+    type: line-chart
+    position: below-toggle
+    function: 감정 흐름 라인 차트 (X축: 날짜, Y축: 1~5점)
+    data_source:
+      resource: daily_notes
+      fields: [date, emotion_score]
+    config:
+      y_range: [1, 5]
+      empty_point: "데이터 없는 날 → 포인트 생략 (선 끊김)"
+
+  - id: completion_chart
+    type: bar-chart
+    position: below-emotion
+    function: 할일 완료율 바 차트 (X축: 날짜, Y축: 0~100%)
+    data_source:
+      resource: todos
+      operation: get_completion_stats
+    config:
+      y_range: [0, 100]
+      format: "퍼센트(%)"
+
+  - id: streak_counter
+    type: stat-card
+    position: below-completion
+    function: 연속 기록일 표시
+    data_source:
+      resource: daily_notes
+      operation: get_streak
+    display: "🔥 {count}일 연속 기록"
+
+tests:
+  - name: 주간 데이터 로드
+    when: 통계 탭 진입 (기본 주간)
+    then:
+      - "최근 7일 감정 라인 차트 표시"
+      - "최근 7일 완료율 바 차트 표시"
+      - "현재 연속 기록일 표시"
+      - "데이터 없는 날 → 차트 포인트 생략"
+
+  - name: 월간 전환
+    when: 월간 토글 선택
+    then:
+      - "최근 30일 데이터로 차트 재렌더링"
+      - "Streak은 기간과 무관하게 현재 값 유지"
+
+  - name: 데이터 없음
+    when: 기록 없는 신규 사용자
+    then:
+      - "빈 차트 + '기록을 시작해보세요' 안내 메시지"

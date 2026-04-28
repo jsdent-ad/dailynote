@@ -1,0 +1,46 @@
+version: "2.0"
+
+resources:
+  daily_notes:
+    description: 하루 단위의 감정 스코어와 일기 내용
+    storage: SQLite (expo-sqlite)
+    fields:
+      id: { type: integer, pk: true, auto: true }
+      date: { type: text, unique: true, format: "YYYY-MM-DD" }
+      emotion_score: { type: integer, nullable: true, range: [1, 5] }
+      diary_text: { type: text, nullable: true, default: "" }
+      created_at: { type: text, format: "ISO 8601" }
+      updated_at: { type: text, format: "ISO 8601" }
+    constraints:
+      - "하루에 하나의 노트만 존재 (date UNIQUE)"
+      - "emotion_score는 NULL 허용 (미입력 시)"
+    operations:
+      - upsert_by_date: "없으면 생성, 있으면 업데이트"
+      - get_by_date: "날짜로 단건 조회"
+      - get_range: "날짜 범위 조회 (통계용)"
+      - get_streak: "연속 기록일 계산"
+      - export_all: "전체 데이터 내보내기 (백업)"
+
+  todos:
+    description: 날짜별 할일 목록
+    storage: SQLite (expo-sqlite)
+    fields:
+      id: { type: integer, pk: true, auto: true }
+      date: { type: text, format: "YYYY-MM-DD" }
+      content: { type: text, required: true }
+      is_completed: { type: integer, default: 0, enum: [0, 1] }
+      display_order: { type: integer, default: 0 }
+      carried_over: { type: integer, default: 0, enum: [0, 1] }
+      created_at: { type: text, format: "ISO 8601" }
+    constraints:
+      - "content는 빈 문자열 불가"
+      - "is_completed, carried_over는 0 또는 1만 허용"
+    operations:
+      - list_by_date: "날짜별 할일 조회 (display_order 정렬)"
+      - create: "할일 추가"
+      - toggle_complete: "완료/미완료 토글"
+      - delete: "할일 삭제"
+      - reorder: "순서 변경"
+      - carry_over: "미완료 할일 자동 이월"
+      - get_completion_stats: "날짜 범위별 완료율 조회"
+      - export_all: "전체 데이터 내보내기 (백업)"

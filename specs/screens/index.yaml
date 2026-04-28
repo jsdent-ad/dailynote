@@ -1,0 +1,32 @@
+version: "2.0"
+project: DailyNote
+
+screens:
+  - id: screen-01
+    name: 오늘의 데일리노트
+    file: daily-note.yaml
+    route: /daily
+    default: true
+
+  - id: screen-02
+    name: 통계/인사이트
+    file: stats.yaml
+    route: /stats
+
+  - id: screen-03
+    name: 설정
+    file: settings.yaml
+    route: /settings
+
+navigation:
+  type: bottom-tabs
+  tabs:
+    - screen: screen-01
+      icon: note-calendar
+      label: 데일리노트
+    - screen: screen-02
+      icon: chart-line
+      label: 통계
+    - screen: screen-03
+      icon: gear
+      label: 설정

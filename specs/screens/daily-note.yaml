@@ -1,0 +1,121 @@
+version: "2.0"
+
+screen:
+  id: screen-01
+  name: 오늘의 데일리노트
+  route: /daily
+  layout: single-scroll
+  description: >
+    메인 화면. 날짜+감정+할일+일기를 하나의 스크롤에서 통합 표시.
+    좌우 스와이프로 날짜 이동. 자동 저장(1초 디바운스).
+
+data_requirements:
+  - resource: daily_notes
+    needs: [id, date, emotion_score, diary_text]
+    filters: { date: ":selected_date" }
+    operations: [get_by_date, upsert_by_date]
+
+  - resource: todos
+    needs: [id, content, is_completed, display_order, carried_over]
+    filters: { date: ":selected_date" }
+    operations: [list_by_date, create, toggle_complete, delete, carry_over]
+
+state:
+  local:
+    - selected_date: "오늘 날짜 (YYYY-MM-DD), 스와이프로 변경"
+    - is_recording: "STT 녹음 중 여부"
+
+components:
+  - id: date_header
+    type: header
+    position: top
+    function: 현재 선택된 날짜 표시 + 좌우 화살표 탭으로 날짜 이동
+    interactions:
+      - "좌측 화살표 탭 → 이전 날짜"
+      - "우측 화살표 탭 → 다음 날짜"
+
+  - id: emotion_score
+    type: custom
+    position: below-header
+    function: 1~5점 감정 스코어 선택 (별 또는 숫자 버튼)
+    data_source:
+      resource: daily_notes
+      field: emotion_score
+    interactions:
+      - "점수 탭 → 감정 저장 (즉시 upsert)"
+      - "이미 선택된 점수 탭 → 해제 (NULL)"
+
+  - id: todo_list
+    type: list
+    position: main
+    function: 할일 목록 표시 (체크박스 + 텍스트)
+    data_source:
+      resource: todos
+    interactions:
+      - "체크박스 탭 → 완료/미완료 토글"
+      - "좌측 스와이프 → 삭제 확인 다이얼로그"
+      - "이월된 항목은 시각적으로 구분 (배지 또는 색상)"
+
+  - id: todo_add
+    type: input
+    position: below-list
+    function: 새 할일 추가 (텍스트 입력 + 엔터)
+    interactions:
+      - "엔터/추가 버튼 → 할일 생성"
+      - "빈 입력 → 무시"
+
+  - id: diary_editor
+    type: textarea
+    position: below-todos
+    function: 일기 자유 작성 (멀티라인 텍스트)
+    data_source:
+      resource: daily_notes
+      field: diary_text
+    interactions:
+      - "타이핑 → 1초 디바운스 후 자동 저장"
+      - "placeholder: '오늘 하루는 어땠나요?'"
+
+  - id: mic_button
+    type: button
+    position: diary-editor-bottom-right
+    function: STT 음성 입력 트리거
+    interactions:
+      - "탭 → 음성 인식 시작 (is_recording = true)"
+      - "재탭 또는 침묵 감지 → 음성 인식 종료"
+      - "인식된 텍스트 → diary_editor에 append"
+      - "권한 미허용 시 → 권한 요청 다이얼로그"
+
+gestures:
+  - type: swipe-horizontal
+    target: screen
+    action: "좌우 스와이프 → selected_date 변경 (±1일)"
+    animation: "slide 250ms ease-out"
+
+tests:
+  - name: 오늘 데이터 로드
+    when: 앱 실행 (오늘 날짜)
+    then:
+      - "오늘의 감정 스코어 표시 (없으면 미선택)"
+      - "오늘의 할일 목록 표시"
+      - "오늘의 일기 내용 표시 (없으면 placeholder)"
+      - "어제 미완료 할일 자동 이월"
+
+  - name: 할일 CRUD
+    when: 할일 추가/체크/삭제
+    then:
+      - "추가 → 목록 하단에 새 항목"
+      - "체크 → 완료 상태 토글 + 시각 피드백"
+      - "스와이프 삭제 → 확인 후 제거"
+
+  - name: 음성 입력
+    when: 마이크 버튼 탭
+    then:
+      - "STT 시작 → 버튼 상태 변경 (녹음 중)"
+      - "음성 인식 결과 → 일기 텍스트에 추가"
+      - "마이크 권한 없음 → 권한 요청"
+
+  - name: 날짜 이동
+    when: 좌우 스와이프 또는 화살표 탭
+    then:
+      - "날짜 변경 → 해당 날짜 데이터 로드"
+      - "슬라이드 애니메이션 표시"

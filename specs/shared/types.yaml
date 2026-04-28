@@ -1,0 +1,26 @@
+version: "2.0"
+
+types:
+  DateString:
+    format: "YYYY-MM-DD"
+    example: "2026-04-28"
+
+  EmotionScore:
+    type: integer
+    range: [1, 5]
+    nullable: true
+
+  Period:
+    enum: [weekly, monthly]
+    default: weekly
+
+  Theme:
+    enum: [light, dark]
+    default: light
+
+  CompletionStat:
+    fields:
+      date: DateString
+      total: integer
+      completed: integer
+      completion_rate: float (0~100)
