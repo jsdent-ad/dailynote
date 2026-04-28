@@ -1,27 +1,68 @@
-import { StyleSheet, View, Text } from 'react-native';
+import { useEffect } from 'react';
+import { StyleSheet, View, Text, ScrollView } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
+import { useThemeStore } from '@/stores/useThemeStore';
+import { useStatsStore } from '@/stores/useStatsStore';
+import { spacing, fontSize } from '@/constants/theme';
+import PeriodToggle from '@/components/stats/PeriodToggle';
+import EmotionChart from '@/components/stats/EmotionChart';
+import CompletionChart from '@/components/stats/CompletionChart';
+import StreakCounter from '@/components/stats/StreakCounter';
+import EmptyState from '@/components/stats/EmptyState';
 
 export default function StatsScreen() {
+  const { colors } = useThemeStore();
+  const { period, emotionData, completionData, streak, setPeriod, loadStats } = useStatsStore();
+
+  // Reload stats whenever the tab is focused
+  useFocusEffect(
+    useCallback(() => {
+      loadStats();
+    }, [loadStats])
+  );
+
+  const hasData = emotionData.length > 0 || completionData.length > 0;
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>통계/인사이트</Text>
-      <Text style={styles.subtitle}>P3-S1-T1에서 구현 예정</Text>
-    </View>
+    <ScrollView
+      style={[styles.scrollView, { backgroundColor: colors.background }]}
+      contentContainerStyle={styles.content}
+    >
+      <Text style={[styles.title, { color: colors.text }]}>통계/인사이트</Text>
+
+      <PeriodToggle period={period} onChangePeriod={setPeriod} />
+
+      {!hasData ? (
+        <EmptyState />
+      ) : (
+        <View style={styles.charts}>
+          <StreakCounter streak={streak} />
+
+          {emotionData.length > 0 && <EmotionChart data={emotionData} />}
+
+          {completionData.length > 0 && <CompletionChart data={completionData} />}
+        </View>
+      )}
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  scrollView: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+  },
+  content: {
+    padding: spacing.md,
+    paddingBottom: spacing.xl * 2,
+    gap: spacing.md,
   },
   title: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: fontSize.xl,
+    fontWeight: '700',
+    textAlign: 'center',
   },
-  subtitle: {
-    fontSize: 14,
-    color: '#888',
-    marginTop: 8,
+  charts: {
+    gap: spacing.md,
   },
 });
